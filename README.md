@@ -1,0 +1,2 @@
+# tokajuk
+szkola 

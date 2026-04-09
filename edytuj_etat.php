@@ -142,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$etatNotFound) {
 				$update = $pdo->prepare("\n                    UPDATE etaty\n                    SET NAZWA = :NAZWA, PLACA_OD = :PLACA_OD, PLACA_DO = :PLACA_DO\n                    WHERE {$idColumn} = :lookup\n                    LIMIT 1\n                ");
 				$update->bindValue(':lookup', $selectedIdValue, PDO::PARAM_STR);
 			} else {
-				$update = $pdo->prepare('\n                    UPDATE etaty\n                    SET NAZWA = :NAZWA, PLACA_OD = :PLACA_OD, PLACA_DO = :PLACA_DO\n                    WHERE NAZWA = :lookup\n                    LIMIT 1\n                ');
+				$update = $pdo->prepare("\n                    UPDATE etaty\n                    SET NAZWA = :NAZWA, PLACA_OD = :PLACA_OD, PLACA_DO = :PLACA_DO\n                    WHERE NAZWA = :lookup\n                    LIMIT 1\n                ");
 				$update->bindValue(':lookup', $originalNazwa, PDO::PARAM_STR);
 			}
 

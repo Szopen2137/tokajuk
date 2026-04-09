@@ -11,7 +11,8 @@ $success = false;
 $formError = '';
 
 $addressColumn = 'ADRES';
-$addressMaxLength = 50;
+$addressMaxLength = 20;
+$nameMaxLength = 20;
 $idZespNeedsManualValue = false;
 
 try {
@@ -48,12 +49,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form['NAZWA'] = trim((string)($_POST['NAZWA'] ?? ''));
     $form['ADRES'] = trim((string)($_POST['ADRES'] ?? ''));
 
-    if ($form['NAZWA'] === '' || mb_strlen($form['NAZWA']) < 2 || mb_strlen($form['NAZWA']) > 50) {
-        $fieldErrors['NAZWA'] = 'Nazwa zespołu musi mieć od 2 do 50 znaków.';
+    if ($form['NAZWA'] === '' || mb_strlen($form['NAZWA']) < 2 || mb_strlen($form['NAZWA']) > $nameMaxLength) {
+        $fieldErrors['NAZWA'] = 'Nazwa zespołu musi mieć od 2 do 20 znaków.';
     }
 
     if ($form['ADRES'] === '' || mb_strlen($form['ADRES']) < 3 || mb_strlen($form['ADRES']) > $addressMaxLength) {
-        $fieldErrors['ADRES'] = 'Adres musi mieć od 3 do 50 znaków.';
+        $fieldErrors['ADRES'] = 'Adres musi mieć od 3 do 20 znaków.';
     }
 
     if (!array_filter($fieldErrors)) {
@@ -82,6 +83,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } catch (PDOException $e) {
             if ((int)$e->getCode() === 23000) {
                 $fieldErrors['NAZWA'] = 'Taki zespół już istnieje.';
+            } elseif ($e->getCode() === '22001' || ((int)($e->errorInfo[1] ?? 0) === 1406)) {
+                $formError = 'Nazwa lub adres są za długie (maksymalnie 20 znaków).';
             } else {
                 $formError = 'Nie udało się dodać zespołu: ' . $e->getMessage();
             }
@@ -138,6 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input
                     type="text"
                     name="NAZWA"
+                    maxlength="20"
                     class="form-control<?= $fieldErrors['NAZWA'] ? ' is-invalid' : '' ?>"
                     value="<?= h($form['NAZWA']) ?>"
                 >
@@ -151,7 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input
                     type="text"
                     name="ADRES"
-                    maxlength="50"
+                    maxlength="20"
                     class="form-control<?= $fieldErrors['ADRES'] ? ' is-invalid' : '' ?>"
                     value="<?= h($form['ADRES']) ?>"
                 >

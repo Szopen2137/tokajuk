@@ -24,6 +24,7 @@ function toMoneyOrNull(string $value): ?float
 $currentPage = basename($_SERVER['PHP_SELF']);
 $formError = '';
 $notFound = false;
+$minimumSalary = 3500;
 
 $idPrac = trim((string)($_GET['id'] ?? $_POST['id'] ?? ''));
 
@@ -123,14 +124,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$notFound) {
 		}
 	}
 
-	if ($placaPod === null || $placaPod < 0) {
-		$fieldErrors['PLACA_POD'] = 'Płaca podstawowa musi być liczbą >= 0.';
+	if ($placaPod === null || $placaPod < $minimumSalary) {
+		$fieldErrors['PLACA_POD'] = 'Płaca podstawowa musi być liczbą większą lub równą 3500.';
 	}
 
 	if ($form['PLACA_DOD'] !== '' && $placaDod === null) {
 		$fieldErrors['PLACA_DOD'] = 'Płaca dodatkowa musi być poprawną liczbą.';
 	} elseif ($placaDod !== null && $placaDod < 0) {
 		$fieldErrors['PLACA_DOD'] = 'Płaca dodatkowa nie może być ujemna.';
+	}
+
+	if (!$fieldErrors['PLACA_POD'] && $placaDod !== null && $placaDod < $placaPod) {
+		$fieldErrors['PLACA_DOD'] = 'Płaca dodatkowa nie może być mniejsza niż płaca podstawowa.';
 	}
 
 	if ($form['ID_SZEFA'] !== '' && !in_array($form['ID_SZEFA'], $allowedSzefIds, true)) {

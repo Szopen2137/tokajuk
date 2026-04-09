@@ -24,6 +24,7 @@ function toMoneyOrNull(string $value): ?float
 $currentPage = basename($_SERVER['PHP_SELF']);
 $success = false;
 $formError = '';
+$minimumSalary = 3500;
 
 $fieldErrors = [
     'IMIE' => '',
@@ -89,14 +90,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    if ($placaPod === null || $placaPod < 0) {
-        $fieldErrors['PLACA_POD'] = 'Płaca podstawowa musi być liczbą >= 0.';
+    if ($placaPod === null || $placaPod < $minimumSalary) {
+        $fieldErrors['PLACA_POD'] = 'Płaca podstawowa musi być liczbą większą lub równą 3500.';
     }
 
     if ($form['PLACA_DOD'] !== '' && $placaDod === null) {
         $fieldErrors['PLACA_DOD'] = 'Płaca dodatkowa musi być poprawną liczbą.';
     } elseif ($placaDod !== null && $placaDod < 0) {
         $fieldErrors['PLACA_DOD'] = 'Płaca dodatkowa nie może być ujemna.';
+    }
+
+    if (!$fieldErrors['PLACA_POD'] && $placaDod !== null && $placaDod < $placaPod) {
+        $fieldErrors['PLACA_DOD'] = 'Płaca dodatkowa nie może być mniejsza niż płaca podstawowa.';
     }
 
     if ($form['ID_SZEFA'] !== '' && !in_array($form['ID_SZEFA'], $allowedSzefIds, true)) {
@@ -250,11 +255,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div class="col-md-4">
                 <label class="form-label">Płaca podstawowa</label>
-                <input type="number" step="0.01" name="PLACA_POD" class="form-control" value="<?= h($form['PLACA_POD']) ?>">
+                <input
+                    type="number"
+                    step="0.01"
+                    name="PLACA_POD"
+                    class="form-control<?= $fieldErrors['PLACA_POD'] ? ' is-invalid' : '' ?>"
+                    value="<?= h($form['PLACA_POD']) ?>"
+                >
+                <?php if ($fieldErrors['PLACA_POD']): ?>
+                    <div class="invalid-feedback"><?= h($fieldErrors['PLACA_POD']) ?></div>
+                <?php endif; ?>
             </div>
             <div class="col-md-4">
                 <label class="form-label">Płaca dodatkowa</label>
-                <input type="number" step="0.01" name="PLACA_DOD" class="form-control" value="<?= h($form['PLACA_DOD']) ?>">
+                <input
+                    type="number"
+                    step="0.01"
+                    name="PLACA_DOD"
+                    class="form-control<?= $fieldErrors['PLACA_DOD'] ? ' is-invalid' : '' ?>"
+                    value="<?= h($form['PLACA_DOD']) ?>"
+                >
+                <?php if ($fieldErrors['PLACA_DOD']): ?>
+                    <div class="invalid-feedback"><?= h($fieldErrors['PLACA_DOD']) ?></div>
+                <?php endif; ?>
             </div>
 
             <div class="col-12 mt-3">

@@ -50,6 +50,7 @@ $fieldErrors = [
 ];
 $formError = '';
 $etatNotFound = false;
+$minimumSalary = 3500;
 
 $idColumn = findEtatIdColumn($pdo);
 $idParam = trim((string)($_GET['id'] ?? $_POST['id'] ?? ''));
@@ -108,16 +109,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$etatNotFound) {
 	$placaOd = toMoneyOrNull($form['PLACA_OD']);
 	$placaDo = toMoneyOrNull($form['PLACA_DO']);
 
-	if ($form['NAZWA'] === '' || mb_strlen($form['NAZWA']) < 2 || mb_strlen($form['NAZWA']) > 80) {
-		$fieldErrors['NAZWA'] = 'Nazwa etatu musi mieć od 2 do 80 znaków.';
+	if ($form['NAZWA'] === '' || mb_strlen($form['NAZWA']) < 2 || mb_strlen($form['NAZWA']) > 30) {
+		$fieldErrors['NAZWA'] = 'Nazwa etatu musi mieć od 2 do 30 znaków.';
 	}
 
-	if ($placaOd === null || $placaOd < 0) {
-		$fieldErrors['PLACA_OD'] = 'Płaca minimalna musi być liczbą większą lub równą 0.';
+	if ($placaOd === null || $placaOd < $minimumSalary) {
+		$fieldErrors['PLACA_OD'] = 'Płaca minimalna musi być liczbą większą lub równą 3500.';
 	}
 
-	if ($placaDo === null || $placaDo < 0) {
-		$fieldErrors['PLACA_DO'] = 'Płaca maksymalna musi być liczbą większą lub równą 0.';
+	if ($placaDo === null || $placaDo < $minimumSalary) {
+		$fieldErrors['PLACA_DO'] = 'Płaca maksymalna musi być liczbą większą lub równą 3500.';
 	}
 
 	if (!$fieldErrors['PLACA_OD'] && !$fieldErrors['PLACA_DO'] && $placaOd > $placaDo) {
@@ -152,6 +153,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$etatNotFound) {
 		} catch (PDOException $e) {
 			if ((int)$e->getCode() === 23000) {
 				$fieldErrors['NAZWA'] = 'Taki etat już istnieje.';
+			} elseif ($e->getCode() === '22001' || ((int)($e->errorInfo[1] ?? 0) === 1406)) {
+				$fieldErrors['NAZWA'] = 'Nazwa etatu jest za długa (maksymalnie 30 znaków).';
 			} else {
 				$formError = 'Nie udało się zapisać zmian.';
 			}
@@ -159,7 +162,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$etatNotFound) {
 	}
 }
 
-$isSaved = isset($_GET['saved']) && $_GET['saved'] === '1';
+$isSaved = isset($_GET['saved'])
+	&& $_GET['saved'] === '1'
+	&& $_SERVER['REQUEST_METHOD'] !== 'POST'
+	&& $formError === ''
+	&& !array_filter($fieldErrors);
 ?>
 <!doctype html>
 <html lang="pl" data-bs-theme="dark">
@@ -222,6 +229,7 @@ $isSaved = isset($_GET['saved']) && $_GET['saved'] === '1';
 					<input
 						type="text"
 						name="NAZWA"
+						maxlength="30"
 						class="form-control<?= $fieldErrors['NAZWA'] ? ' is-invalid' : '' ?>"
 						value="<?= h($form['NAZWA']) ?>"
 					>

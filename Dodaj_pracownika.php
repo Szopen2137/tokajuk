@@ -63,12 +63,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $placaPod = toMoneyOrNull($form['PLACA_POD']);
     $placaDod = toMoneyOrNull($form['PLACA_DOD']);
 
-    if ($form['IMIE'] === '' || !preg_match('/^[\p{L}\s\-]{2,30}$/u', $form['IMIE'])) {
-        $fieldErrors['IMIE'] = 'Imię musi mieć 2-30 znaków (litery, spacja, myślnik).';
+    if ($form['IMIE'] === '' || !preg_match('/^[\p{L}\s\-]{2,20}$/u', $form['IMIE'])) {
+        $fieldErrors['IMIE'] = 'Imię musi mieć 2-20 znaków (litery, spacja, myślnik).';
     }
 
-    if ($form['NAZWISKO'] === '' || !preg_match('/^[\p{L}\s\-]{2,50}$/u', $form['NAZWISKO'])) {
-        $fieldErrors['NAZWISKO'] = 'Nazwisko musi mieć 2-50 znaków (litery, spacja, myślnik).';
+    if ($form['NAZWISKO'] === '' || !preg_match('/^[\p{L}\s\-]{2,15}$/u', $form['NAZWISKO'])) {
+        $fieldErrors['NAZWISKO'] = 'Nazwisko musi mieć 2-15 znaków (litery, spacja, myślnik).';
     }
 
     if ($form['ETAT'] === '' || !in_array($form['ETAT'], $allowedEtaty, true)) {

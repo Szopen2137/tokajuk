@@ -21,56 +21,56 @@ $formError = '';
 
 $fieldErrors = [
     'NAZWA' => '',
-    'PLACA_MIN' => '',
-    'PLACA_MAX' => ''
+    'PLACA_OD' => '',
+    'PLACA_DO' => ''
 ];
 
 $form = [
     'NAZWA' => '',
-    'PLACA_MIN' => '',
-    'PLACA_MAX' => ''
+    'PLACA_OD' => '',
+    'PLACA_DO' => ''
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form['NAZWA'] = trim((string)($_POST['NAZWA'] ?? ''));
-    $form['PLACA_MIN'] = trim((string)($_POST['PLACA_MIN'] ?? ''));
-    $form['PLACA_MAX'] = trim((string)($_POST['PLACA_MAX'] ?? ''));
+    $form['PLACA_OD'] = trim((string)($_POST['PLACA_OD'] ?? ''));
+    $form['PLACA_DO'] = trim((string)($_POST['PLACA_DO'] ?? ''));
 
-    $placaMin = toMoneyOrNull($form['PLACA_MIN']);
-    $placaMax = toMoneyOrNull($form['PLACA_MAX']);
+    $placaOd = toMoneyOrNull($form['PLACA_OD']);
+    $placaDo = toMoneyOrNull($form['PLACA_DO']);
 
     if ($form['NAZWA'] === '' || mb_strlen($form['NAZWA']) < 2 || mb_strlen($form['NAZWA']) > 80) {
         $fieldErrors['NAZWA'] = 'Nazwa etatu musi mieć od 2 do 80 znaków.';
     }
 
-    if ($placaMin === null || $placaMin < 0) {
-        $fieldErrors['PLACA_MIN'] = 'Płaca minimalna musi być liczbą >= 0.';
+    if ($placaOd === null || $placaOd < 0) {
+        $fieldErrors['PLACA_OD'] = 'Płaca minimalna musi być liczbą większą lub równą 0.';
     }
 
-    if ($placaMax === null || $placaMax < 0) {
-        $fieldErrors['PLACA_MAX'] = 'Płaca maksymalna musi być liczbą >= 0.';
+    if ($placaDo === null || $placaDo < 0) {
+        $fieldErrors['PLACA_DO'] = 'Płaca maksymalna musi być liczbą większą lub równą 0.';
     }
 
-    if (!$fieldErrors['PLACA_MIN'] && !$fieldErrors['PLACA_MAX'] && $placaMin > $placaMax) {
-        $fieldErrors['PLACA_MAX'] = 'Płaca maksymalna nie może być mniejsza niż minimalna.';
+    if (!$fieldErrors['PLACA_OD'] && !$fieldErrors['PLACA_DO'] && $placaOd > $placaDo) {
+        $fieldErrors['PLACA_DO'] = 'Płaca maksymalna nie może być mniejsza niż minimalna.';
     }
 
     if (!array_filter($fieldErrors)) {
         try {
             $stmt = $pdo->prepare("
-                INSERT INTO etaty (NAZWA, PLACA_MIN, PLACA_MAX)
-                VALUES (:NAZWA, :PLACA_MIN, :PLACA_MAX)
+                INSERT INTO etaty (NAZWA, PLACA_OD, PLACA_DO)
+                VALUES (:NAZWA, :PLACA_OD, :PLACA_DO)
             ");
             $stmt->bindValue(':NAZWA', $form['NAZWA'], PDO::PARAM_STR);
-            $stmt->bindValue(':PLACA_MIN', (string)$placaMin, PDO::PARAM_STR);
-            $stmt->bindValue(':PLACA_MAX', (string)$placaMax, PDO::PARAM_STR);
+            $stmt->bindValue(':PLACA_OD', (string)$placaOd, PDO::PARAM_STR);
+            $stmt->bindValue(':PLACA_DO', (string)$placaDo, PDO::PARAM_STR);
             $stmt->execute();
 
             $success = true;
             $form = [
                 'NAZWA' => '',
-                'PLACA_MIN' => '',
-                'PLACA_MAX' => ''
+                'PLACA_OD' => '',
+                'PLACA_DO' => ''
             ];
         } catch (PDOException $e) {
             if ((int)$e->getCode() === 23000) {
@@ -144,12 +144,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input
                     type="number"
                     step="0.01"
-                    name="PLACA_MIN"
-                    class="form-control<?= $fieldErrors['PLACA_MIN'] ? ' is-invalid' : '' ?>"
-                    value="<?= h($form['PLACA_MIN']) ?>"
+                    name="PLACA_OD"
+                    class="form-control<?= $fieldErrors['PLACA_OD'] ? ' is-invalid' : '' ?>"
+                    value="<?= h($form['PLACA_OD']) ?>"
                 >
-                <?php if ($fieldErrors['PLACA_MIN']): ?>
-                    <div class="invalid-feedback"><?= h($fieldErrors['PLACA_MIN']) ?></div>
+                <?php if ($fieldErrors['PLACA_OD']): ?>
+                    <div class="invalid-feedback"><?= h($fieldErrors['PLACA_OD']) ?></div>
                 <?php endif; ?>
             </div>
 
@@ -158,12 +158,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input
                     type="number"
                     step="0.01"
-                    name="PLACA_MAX"
-                    class="form-control<?= $fieldErrors['PLACA_MAX'] ? ' is-invalid' : '' ?>"
-                    value="<?= h($form['PLACA_MAX']) ?>"
+                    name="PLACA_DO"
+                    class="form-control<?= $fieldErrors['PLACA_DO'] ? ' is-invalid' : '' ?>"
+                    value="<?= h($form['PLACA_DO']) ?>"
                 >
-                <?php if ($fieldErrors['PLACA_MAX']): ?>
-                    <div class="invalid-feedback"><?= h($fieldErrors['PLACA_MAX']) ?></div>
+                <?php if ($fieldErrors['PLACA_DO']): ?>
+                    <div class="invalid-feedback"><?= h($fieldErrors['PLACA_DO']) ?></div>
                 <?php endif; ?>
             </div>
 

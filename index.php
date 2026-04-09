@@ -29,6 +29,9 @@ function h($value): string
 {
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
+
+$flashDeleted = isset($_GET['deleted']) && $_GET['deleted'] === '1';
+$flashError = (string)($_GET['error'] ?? '');
 ?>
 <!doctype html>
 <html lang="en" data-bs-theme="dark">
@@ -73,6 +76,18 @@ function h($value): string
         </div>
     </form>
 
+    <?php if ($flashDeleted): ?>
+        <div class="alert alert-success">Pracownik został usunięty.</div>
+    <?php endif; ?>
+
+    <?php if ($flashError === 'used'): ?>
+        <div class="alert alert-warning">Nie można usunąć pracownika, ponieważ jest szefem innych pracowników.</div>
+    <?php elseif ($flashError === 'missing'): ?>
+        <div class="alert alert-warning">Nie wybrano pracownika do usunięcia.</div>
+    <?php elseif ($flashError === 'failed'): ?>
+        <div class="alert alert-danger">Nie udało się usunąć pracownika.</div>
+    <?php endif; ?>
+
     <div class="row">
         <div class="col-12">
             <table class="table">
@@ -87,6 +102,7 @@ function h($value): string
                     <th>Placa pod</th>
                     <th>Placa dod</th>
                     <th>Nazwa zespołu</th>
+                    <th>Akcje</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -101,6 +117,15 @@ function h($value): string
                         <td><?= h($row['PLACA_POD']) ?></td>
                         <td><?= h($row['PLACA_DOD']) ?></td>
                         <td><?= h($row['NAZWA_ZESPOLU']) ?></td>
+                        <td>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a class="btn btn-sm btn-outline-warning" href="edytuj_pracownika.php?id=<?= urlencode((string)$row['ID_PRAC']) ?>">Edytuj</a>
+                                <form method="post" action="usun_pracownika.php" class="d-inline" id="delete-pracownik-<?= h($row['ID_PRAC']) ?>">
+                                    <input type="hidden" name="id" value="<?= h($row['ID_PRAC']) ?>">
+                                    <button type="button" class="btn btn-sm btn-outline-danger js-delete-button" data-delete-form="delete-pracownik-<?= h($row['ID_PRAC']) ?>" data-delete-label="pracownika">Usuń</button>
+                                </form>
+                            </div>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
@@ -109,6 +134,47 @@ function h($value): string
     </div>
 </div>
 
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Potwierdzenie usuwania</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
+            </div>
+            <div class="modal-body">
+                Czy na pewno chcesz usunąć <span id="deleteConfirmLabel">ten rekord</span>?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                <button type="button" class="btn btn-danger" id="deleteConfirmSubmit">Usuń</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var modalElement = document.getElementById('deleteConfirmModal');
+    var modal = new bootstrap.Modal(modalElement);
+    var pendingForm = null;
+    var deleteLabel = document.getElementById('deleteConfirmLabel');
+    var submitButton = document.getElementById('deleteConfirmSubmit');
+
+    document.querySelectorAll('.js-delete-button').forEach(function (button) {
+        button.addEventListener('click', function () {
+            pendingForm = document.getElementById(button.dataset.deleteForm);
+            deleteLabel.textContent = button.dataset.deleteLabel || 'ten rekord';
+            modal.show();
+        });
+    });
+
+    submitButton.addEventListener('click', function () {
+        if (pendingForm) {
+            pendingForm.submit();
+        }
+    });
+});
+</script>
 </body>
 </html>

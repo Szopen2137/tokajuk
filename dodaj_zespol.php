@@ -10,6 +10,30 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 $success = false;
 $formError = '';
 
+$addressColumn = 'ADRES';
+$addressMaxLength = 50;
+$idZespNeedsManualValue = false;
+
+try {
+    $addressColumnCheck = $pdo->query("SHOW COLUMNS FROM zespoly LIKE 'ADRES'")->fetch(PDO::FETCH_ASSOC);
+    if (!$addressColumnCheck) {
+        $addressColumnAltCheck = $pdo->query("SHOW COLUMNS FROM zespoly LIKE 'ADRES_ZESP'")->fetch(PDO::FETCH_ASSOC);
+        if ($addressColumnAltCheck) {
+            $addressColumn = 'ADRES_ZESP';
+        }
+    }
+
+    $idZespColumn = $pdo->query("SHOW COLUMNS FROM zespoly LIKE 'ID_ZESP'")->fetch(PDO::FETCH_ASSOC);
+    if ($idZespColumn) {
+        $hasDefault = $idZespColumn['Default'] !== null;
+        $isNullable = strtoupper((string)$idZespColumn['Null']) === 'YES';
+        $isAutoIncrement = stripos((string)$idZespColumn['Extra'], 'auto_increment') !== false;
+        $idZespNeedsManualValue = !$hasDefault && !$isNullable && !$isAutoIncrement;
+    }
+} catch (PDOException $e) {
+    $formError = 'Nie udało się sprawdzić struktury tabeli zespoly.';
+}
+
 $fieldErrors = [
     'NAZWA' => '',
     'ADRES' => ''
@@ -24,19 +48,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form['NAZWA'] = trim((string)($_POST['NAZWA'] ?? ''));
     $form['ADRES'] = trim((string)($_POST['ADRES'] ?? ''));
 
-    if ($form['NAZWA'] === '' || mb_strlen($form['NAZWA']) < 2 || mb_strlen($form['NAZWA']) > 80) {
-        $fieldErrors['NAZWA'] = 'Nazwa zespołu musi mieć od 2 do 80 znaków.';
+    if ($form['NAZWA'] === '' || mb_strlen($form['NAZWA']) < 2 || mb_strlen($form['NAZWA']) > 50) {
+        $fieldErrors['NAZWA'] = 'Nazwa zespołu musi mieć od 2 do 50 znaków.';
     }
 
-    if ($form['ADRES'] === '' || mb_strlen($form['ADRES']) < 3 || mb_strlen($form['ADRES']) > 120) {
-        $fieldErrors['ADRES'] = 'Adres musi mieć od 3 do 120 znaków.';
+    if ($form['ADRES'] === '' || mb_strlen($form['ADRES']) < 3 || mb_strlen($form['ADRES']) > $addressMaxLength) {
+        $fieldErrors['ADRES'] = 'Adres musi mieć od 3 do 50 znaków.';
     }
 
     if (!array_filter($fieldErrors)) {
         try {
-            $stmt = $pdo->prepare("INSERT INTO zespoly (NAZWA, ADRES) VALUES (:NAZWA, :ADRES)");
+            $columns = ['NAZWA', $addressColumn];
+            $params = [':NAZWA', ':ADRES'];
+
+            $idZespValue = null;
+            if ($idZespNeedsManualValue) {
+                $idZespValue = (int)$pdo->query("SELECT COALESCE(MAX(ID_ZESP), 0) + 1 FROM zespoly")->fetchColumn();
+                $columns[] = 'ID_ZESP';
+                $params[] = ':ID_ZESP';
+            }
+
+            $sql = 'INSERT INTO zespoly (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $params) . ')';
+            $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':NAZWA', $form['NAZWA'], PDO::PARAM_STR);
             $stmt->bindValue(':ADRES', $form['ADRES'], PDO::PARAM_STR);
+            if ($idZespNeedsManualValue && $idZespValue !== null) {
+                $stmt->bindValue(':ID_ZESP', $idZespValue, PDO::PARAM_INT);
+            }
             $stmt->execute();
 
             $success = true;
@@ -45,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ((int)$e->getCode() === 23000) {
                 $fieldErrors['NAZWA'] = 'Taki zespół już istnieje.';
             } else {
-                $formError = 'Nie udało się dodać zespołu.';
+                $formError = 'Nie udało się dodać zespołu: ' . $e->getMessage();
             }
         }
     }
@@ -113,6 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input
                     type="text"
                     name="ADRES"
+                    maxlength="50"
                     class="form-control<?= $fieldErrors['ADRES'] ? ' is-invalid' : '' ?>"
                     value="<?= h($form['ADRES']) ?>"
                 >

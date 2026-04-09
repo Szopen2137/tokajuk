@@ -17,7 +17,7 @@ function toMoneyOrNull(string $value): ?float
 
 function isValidEtatName(string $name): bool
 {
-	return (bool)preg_match('/^[\p{L}\d\s\-]+$/u', $name);
+	return (bool)preg_match('/^[\p{L}\d\s\-\.\/,\(\)]+$/u', $name);
 }
 
 function findEtatIdColumn(PDO $pdo): ?string
@@ -117,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$etatNotFound) {
 	if ($form['NAZWA'] === '' || mb_strlen($form['NAZWA']) < 2 || mb_strlen($form['NAZWA']) > 30) {
 		$fieldErrors['NAZWA'] = 'Nazwa etatu musi mieć od 2 do 30 znaków.';
 	} elseif (!isValidEtatName($form['NAZWA'])) {
-		$fieldErrors['NAZWA'] = 'Nazwa etatu może zawierać tylko litery, cyfry, spacje i myślnik.';
+		$fieldErrors['NAZWA'] = 'Nazwa etatu może zawierać litery, cyfry, spacje oraz znaki: - . / , ( ).';
 	}
 
 	if ($placaOd === null || $placaOd < $minimumSalary) {
@@ -151,12 +151,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$etatNotFound) {
 			$update->bindValue(':PLACA_DO', (string)$placaDo, PDO::PARAM_STR);
 			$update->execute();
 
-			if ($lookupById && $selectedIdValue !== '') {
+			if ($update->rowCount() === 0) {
+				$formError = 'Nie znaleziono etatu do zapisania zmian.';
+				$etatNotFound = true;
+			} elseif ($lookupById && $selectedIdValue !== '') {
 				header('Location: edytuj_etat.php?id=' . urlencode($selectedIdValue) . '&saved=1');
+				exit;
 			} else {
 				header('Location: edytuj_etat.php?nazwa=' . urlencode($form['NAZWA']) . '&saved=1');
+				exit;
 			}
-			exit;
 		} catch (PDOException $e) {
 			if ((int)$e->getCode() === 23000) {
 				$fieldErrors['NAZWA'] = 'Taki etat już istnieje.';

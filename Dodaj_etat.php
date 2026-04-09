@@ -17,7 +17,7 @@ function toMoneyOrNull(string $value): ?float
 
 function isValidEtatName(string $name): bool
 {
-    return (bool)preg_match('/^[\p{L}\d\s\-]+$/u', $name);
+    return (bool)preg_match('/^[\p{L}\d\s\-\.\/,\(\)]+$/u', $name);
 }
 
 $currentPage = basename($_SERVER['PHP_SELF']);
@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($form['NAZWA'] === '' || mb_strlen($form['NAZWA']) < 2 || mb_strlen($form['NAZWA']) > 30) {
         $fieldErrors['NAZWA'] = 'Nazwa etatu musi mieć od 2 do 30 znaków.';
     } elseif (!isValidEtatName($form['NAZWA'])) {
-        $fieldErrors['NAZWA'] = 'Nazwa etatu może zawierać tylko litery, cyfry, spacje i myślnik.';
+        $fieldErrors['NAZWA'] = 'Nazwa etatu może zawierać litery, cyfry, spacje oraz znaki: - . / , ( ).';
     }
 
     if ($placaOd === null || $placaOd < $minimumSalary) {

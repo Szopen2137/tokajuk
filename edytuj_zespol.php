@@ -6,6 +6,11 @@ function h($value): string
 	return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
 
+function isValidZespolName(string $name): bool
+{
+	return (bool)preg_match('/^[\p{L}\d\s\-]+$/u', $name);
+}
+
 function detectAddressColumn(PDO $pdo): string
 {
 	try {
@@ -118,6 +123,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$zespolNotFound) {
 
 	if ($form['NAZWA'] === '' || mb_strlen($form['NAZWA']) < 2 || mb_strlen($form['NAZWA']) > $nameMaxLength) {
 		$fieldErrors['NAZWA'] = 'Nazwa zespołu musi mieć od 2 do 20 znaków.';
+	} elseif (!isValidZespolName($form['NAZWA'])) {
+		$fieldErrors['NAZWA'] = 'Nazwa zespołu może zawierać tylko litery, cyfry, spacje i myślnik.';
 	}
 
 	if ($form['ADRES'] === '' || mb_strlen($form['ADRES']) < 3 || mb_strlen($form['ADRES']) > $addressMaxLength) {
@@ -152,7 +159,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$zespolNotFound) {
 			if ((int)$e->getCode() === 23000) {
 				$fieldErrors['NAZWA'] = 'Taki zespół już istnieje.';
 			} elseif ($e->getCode() === '22001' || ((int)($e->errorInfo[1] ?? 0) === 1406)) {
-				$formError = 'Nazwa lub adres są za długie (maksymalnie 20 znaków).';
+				if (mb_strlen($form['NAZWA']) > $nameMaxLength) {
+					$fieldErrors['NAZWA'] = 'Nazwa zespołu musi mieć od 2 do 20 znaków.';
+				}
+				if (mb_strlen($form['ADRES']) > $addressMaxLength) {
+					$fieldErrors['ADRES'] = 'Adres musi mieć od 3 do 20 znaków.';
+				}
+				if (!$fieldErrors['NAZWA'] && !$fieldErrors['ADRES']) {
+					$formError = 'Nazwa lub adres mają niepoprawny format.';
+				}
 			} else {
 				$formError = 'Nie udało się zapisać zmian.';
 			}
@@ -160,7 +175,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$zespolNotFound) {
 	}
 }
 
-$isSaved = isset($_GET['saved']) && $_GET['saved'] === '1';
+$isSaved = isset($_GET['saved'])
+	&& $_GET['saved'] === '1'
+	&& $_SERVER['REQUEST_METHOD'] !== 'POST'
+	&& $formError === ''
+	&& !array_filter($fieldErrors);
 ?>
 <!doctype html>
 <html lang="pl" data-bs-theme="dark">
@@ -223,7 +242,6 @@ $isSaved = isset($_GET['saved']) && $_GET['saved'] === '1';
 					<input
 						type="text"
 						name="NAZWA"
-						maxlength="20"
 						class="form-control<?= $fieldErrors['NAZWA'] ? ' is-invalid' : '' ?>"
 						value="<?= h($form['NAZWA']) ?>"
 					>
@@ -237,7 +255,6 @@ $isSaved = isset($_GET['saved']) && $_GET['saved'] === '1';
 					<input
 						type="text"
 						name="ADRES"
-						maxlength="20"
 						class="form-control<?= $fieldErrors['ADRES'] ? ' is-invalid' : '' ?>"
 						value="<?= h($form['ADRES']) ?>"
 					>

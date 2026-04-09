@@ -151,10 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$etatNotFound) {
 			$update->bindValue(':PLACA_DO', (string)$placaDo, PDO::PARAM_STR);
 			$update->execute();
 
-			if ($update->rowCount() === 0) {
-				$formError = 'Nie znaleziono etatu do zapisania zmian.';
-				$etatNotFound = true;
-			} elseif ($lookupById && $selectedIdValue !== '') {
+			if ($lookupById && $selectedIdValue !== '') {
 				header('Location: edytuj_etat.php?id=' . urlencode($selectedIdValue) . '&saved=1');
 				exit;
 			} else {

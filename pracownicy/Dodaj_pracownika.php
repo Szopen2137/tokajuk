@@ -126,19 +126,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bindValue(':ID_SZEFA', $form['ID_SZEFA'] === '' ? null : (int)$form['ID_SZEFA'], $form['ID_SZEFA'] === '' ? PDO::PARAM_NULL : PDO::PARAM_INT);
         $stmt->bindValue(':ID_ZESP', $form['ID_ZESP'] === '' ? null : (int)$form['ID_ZESP'], $form['ID_ZESP'] === '' ? PDO::PARAM_NULL : PDO::PARAM_INT);
 
-        $stmt->execute();
-        $success = true;
+            $stmt->execute();
+            $success = true;
 
-        $form = [
-            'IMIE' => '',
-            'NAZWISKO' => '',
-            'ETAT' => '',
-            'ID_SZEFA' => '',
-            'ZATRUDNIONY' => date('Y-m-d'),
-            'PLACA_POD' => '',
-            'PLACA_DOD' => '',
-            'ID_ZESP' => ''
-        ];
+            // Prepare JSON response for AJAX clients (include new record id)
+            $newId = (int)$pdo->lastInsertId();
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Pracownik został dodany.',
+                    'id' => $newId,
+                    'data' => [
+                        'IMIE' => $form['IMIE'],
+                        'NAZWISKO' => $form['NAZWISKO']
+                    ]
+                ]);
+                exit;
+            }
+        
+            $form = [
+                'IMIE' => '',
+                'NAZWISKO' => '',
+                'ETAT' => '',
+                'ID_SZEFA' => '',
+                'ZATRUDNIONY' => date('Y-m-d'),
+                'PLACA_POD' => '',
+                'PLACA_DOD' => '',
+                'ID_ZESP' => ''
+            ];
     }
 }
 ?>
@@ -176,15 +192,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="container my-5">
     <h3 class="mb-4">Dodaj pracownika</h3>
 
-    <?php if ($success): ?>
+    <?php
+    // Server-side alert is not needed for AJAX clients; kept for non-AJAX but commented out.
+    /* if ($success): ?>
         <div class="alert alert-success">Pracownik został dodany.</div>
-    <?php endif; ?>
+    <?php endif; */ ?>
 
     <?php if ($formError): ?>
         <div class="alert alert-danger"><?= h($formError) ?></div>
     <?php endif; ?>
 
-    <form method="post" novalidate>
+    <form method="post" novalidate class="ajax-form" data-ajax="true">
         <div class="row g-3">
             <div class="col-md-6">
                 <label class="form-label">Imię</label>
@@ -286,6 +304,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
     </form>
+        <div id="ajax-feedback" class="mt-3"></div>
+
+        <script>
+        (function(){
+            var form = document.querySelector('form.ajax-form');
+            if (!form) return;
+            var feedback = document.getElementById('ajax-feedback');
+            form.addEventListener('ajax:success', function (ev) {
+                var data = ev.detail || {};
+                var msg = data.message || 'OK';
+                var html = '<div class="alert alert-success" role="alert">' + msg + '</div>';
+                if (data.id) html += '<div class="small text-muted">ID: ' + data.id + '</div>';
+                feedback.innerHTML = html;
+                // clear form fields for convenience
+                try { form.reset(); } catch (e) {}
+            });
+            form.addEventListener('ajax:error', function (ev) {
+                var d = ev.detail || {};
+                feedback.innerHTML = '<div class="alert alert-danger">' + (d.error || 'Błąd serwera') + '</div>';
+            });
+        })();
+        </script>
+    <!-- AJAX loader and integration -->
+    <style>
+    #ajax-loader{position:fixed;left:50%;top:20%;transform:translateX(-50%);display:none;z-index:2000}
+    </style>
+    <div id="ajax-loader"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>
+    <script src="ajax.js"></script>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>

@@ -176,8 +176,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$notFound) {
 			$stmt->bindValue(':ID_PRAC', (int)$idPrac, PDO::PARAM_INT);
 			$stmt->execute();
 
-			header('Location: edytuj_pracownika.php?id=' . urlencode($idPrac) . '&saved=1');
-			exit;
+			// Dla AJAX: zwróć JSON zamiast przekierowywać. Zakomentowano przekierowanie stronowe.
+			if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+				header('Content-Type: application/json; charset=utf-8');
+				echo json_encode(['success' => true, 'message' => 'Zmiany zostały zapisane.']);
+				exit;
+			}
+			// header('Location: edytuj_pracownika.php?id=' . urlencode($idPrac) . '&saved=1');
+			// exit;
 		} catch (PDOException $e) {
 			$formError = 'Nie udało się zapisać zmian pracownika.';
 		}
@@ -220,9 +226,11 @@ $isSaved = isset($_GET['saved']) && $_GET['saved'] === '1';
 <div class="container my-5">
 	<h3 class="mb-4">Edytuj pracownika</h3>
 
-	<?php if ($isSaved): ?>
+	<?php
+	// Server-side success alert is commented out for AJAX usage; uncomment if using non-AJAX flow.
+	/* if ($isSaved): ?>
 		<div class="alert alert-success">Zmiany zostały zapisane.</div>
-	<?php endif; ?>
+	<?php endif; */ ?>
 
 	<?php if ($formError): ?>
 		<div class="alert alert-danger"><?= h($formError) ?></div>
@@ -235,7 +243,7 @@ $isSaved = isset($_GET['saved']) && $_GET['saved'] === '1';
 		<div class="alert alert-warning">Nie znaleziono wskazanego pracownika.</div>
 		<a href="index.php" class="btn btn-secondary">Wróć do listy pracowników</a>
 	<?php else: ?>
-		<form method="post" novalidate>
+		<form method="post" novalidate class="ajax-form" data-ajax="true">
 			<input type="hidden" name="id" value="<?= h($idPrac) ?>">
 
 			<div class="row g-3">
@@ -345,6 +353,13 @@ $isSaved = isset($_GET['saved']) && $_GET['saved'] === '1';
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+
+<!-- AJAX loader and integration -->
+<style>
+#ajax-loader{position:fixed;left:50%;top:20%;transform:translateX(-50%);display:none;z-index:2000}
+</style>
+<div id="ajax-loader"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>
+<script src="ajax.js"></script>
 <script>
 document.querySelectorAll('input, select, textarea').forEach(function (el) {
 	function clearInvalid() {

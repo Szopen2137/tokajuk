@@ -120,7 +120,7 @@ $flashError = (string)($_GET['error'] ?? '');
                         <td>
                             <div class="d-flex gap-2 flex-wrap">
                                 <a class="btn btn-sm btn-outline-warning" href="edytuj_pracownika.php?id=<?= urlencode((string)$row['ID_PRAC']) ?>">Edytuj</a>
-                                <form method="post" action="usun_pracownika.php" class="d-inline" id="delete-pracownik-<?= h($row['ID_PRAC']) ?>">
+                                <form method="post" action="usun_pracownika.php" class="d-inline ajax-form" data-ajax="true" id="delete-pracownik-<?= h($row['ID_PRAC']) ?>">
                                     <input type="hidden" name="id" value="<?= h($row['ID_PRAC']) ?>">
                                     <button type="button" class="btn btn-sm btn-outline-danger js-delete-button" data-delete-form="delete-pracownik-<?= h($row['ID_PRAC']) ?>" data-delete-label="pracownika">Usuń</button>
                                 </form>
@@ -170,11 +170,23 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     submitButton.addEventListener('click', function () {
-        if (pendingForm) {
-            pendingForm.submit();
+        if (!pendingForm) return;
+        // If form is marked for AJAX, use requestSubmit() so our global listener intercepts it
+        if (pendingForm.classList.contains('ajax-form') || pendingForm.dataset.ajax === 'true') {
+            pendingForm.requestSubmit();
+            modal.hide();
+            return;
         }
+        pendingForm.submit();
     });
 });
 </script>
+
+<!-- AJAX loader and integration -->
+<style>
+#ajax-loader{position:fixed;left:50%;top:20%;transform:translateX(-50%);display:none;z-index:2000}
+</style>
+<div id="ajax-loader"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>
+<script src="ajax.js"></script>
 </body>
 </html>

@@ -80,7 +80,7 @@ try {
 
     if ($isAjax) {
         header('Content-Type: application/json; charset=utf-8');
-        echo json_encode(['success' => true, 'message' => 'Zespół został usunięty.']);
+        echo json_encode(['success' => true, 'message' => 'Zespół został usunięty.', 'action' => 'delete']);
     } else {
         header('Location: zespoly.php?deleted=1');
     }

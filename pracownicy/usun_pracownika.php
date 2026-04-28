@@ -8,7 +8,7 @@ if ($idPrac === '') {
     if ($isAjax) {
         header('Content-Type: application/json; charset=utf-8');
         http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Nie wybrano pracownika do usunięcia.']);
+            echo json_encode(['success' => false, 'error' => 'Nie wybrano pracownika do usunięcia.']);
     } else {
         header('Location: index.php?error=missing');
     }
@@ -37,7 +37,7 @@ try {
 
     if ($isAjax) {
         header('Content-Type: application/json; charset=utf-8');
-        echo json_encode(['success' => true, 'message' => 'Pracownik został usunięty.']);
+        echo json_encode(['success' => true, 'message' => 'Pracownik został usunięty.', 'action' => 'delete']);
     } else {
         header('Location: index.php?deleted=1');
     }

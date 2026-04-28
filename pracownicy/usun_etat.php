@@ -1,6 +1,18 @@
 <?php
 require_once 'database.php';
 
+$isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+
+function redirectOrJSON($url, $message, $isAjax) {
+    if ($isAjax) {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'error' => $message, 'redirect' => $url]);
+    } else {
+        header('Location: ' . $url);
+    }
+    exit;
+}
+
 function resolveEtatIdentifier(PDO $pdo): ?array
 {
     $idParam = trim((string)($_POST['id'] ?? ''));
@@ -35,8 +47,7 @@ function resolveEtatIdentifier(PDO $pdo): ?array
 $identifier = resolveEtatIdentifier($pdo);
 
 if ($identifier === null) {
-    header('Location: etaty.php?error=missing');
-    exit;
+    redirectOrJSON('etaty.php?error=missing', 'Nie wybrano etatu do usunięcia.', $isAjax);
 }
 
 try {
@@ -49,8 +60,7 @@ try {
         $resolvedName = $lookup->fetchColumn();
 
         if ($resolvedName === false) {
-            header('Location: etaty.php?error=missing');
-            exit;
+            redirectOrJSON('etaty.php?error=missing', 'Nie znaleziono etatu.', $isAjax);
         }
 
         $etatName = (string)$resolvedName;
@@ -61,17 +71,20 @@ try {
     $check->execute();
 
     if ((int)$check->fetchColumn() > 0) {
-        header('Location: etaty.php?error=used');
-        exit;
+        redirectOrJSON('etaty.php?error=used', 'Nie można usunąć etatu, ponieważ jest przypisany do pracowników.', $isAjax);
     }
 
     $delete = $pdo->prepare('DELETE FROM etaty WHERE ' . $identifier['column'] . ' = :value LIMIT 1');
     $delete->bindValue(':value', $identifier['value'], PDO::PARAM_STR);
     $delete->execute();
 
-    header('Location: etaty.php?deleted=1');
+    if ($isAjax) {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => true, 'message' => 'Etat został usunięty.']);
+    } else {
+        header('Location: etaty.php?deleted=1');
+    }
     exit;
 } catch (PDOException $e) {
-    header('Location: etaty.php?error=failed');
-    exit;
+    redirectOrJSON('etaty.php?error=failed', 'Nie udało się usunąć etatu.', $isAjax);
 }

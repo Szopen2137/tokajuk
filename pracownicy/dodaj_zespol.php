@@ -86,6 +86,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute();
 
             $success = true;
+
+            // Return JSON for AJAX requests
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Zespół został dodany.'
+                ]);
+                exit;
+            }
+
             $form = ['NAZWA' => '', 'ADRES' => ''];
         } catch (PDOException $e) {
             if ((int)$e->getCode() === 23000) {
@@ -141,15 +152,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="container my-5">
     <h3 class="mb-4">Dodaj zespół</h3>
 
-    <?php if ($success): ?>
+    <?php /* Zakomentowano - feedback przez JS */ ?>
+    <?php /* if ($success): ?>
         <div class="alert alert-success">Zespół został dodany.</div>
-    <?php endif; ?>
+    <?php endif; */ ?>
 
     <?php if ($formError): ?>
         <div class="alert alert-danger"><?= h($formError) ?></div>
     <?php endif; ?>
 
-    <form method="post" novalidate>
+    <form method="post" novalidate class="ajax-form" data-ajax="true">
         <div class="row g-3">
             <div class="col-md-6">
                 <label class="form-label">Nazwa zespołu</label>
@@ -183,10 +195,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
     </form>
+
+    <div id="ajax-feedback" class="mt-3"></div>
+
+    <script>
+    (function(){
+      var form = document.querySelector('form.ajax-form');
+      if (!form) return;
+      var feedback = document.getElementById('ajax-feedback');
+      form.addEventListener('ajax:success', function (ev) {
+        var data = ev.detail || {};
+        var msg = data.message || 'OK';
+        var html = '<div class="alert alert-success" role="alert">' + msg + '</div>';
+        feedback.innerHTML = html;
+        try { form.reset(); } catch (e) {}
+      });
+      form.addEventListener('ajax:error', function (ev) {
+        var d = ev.detail || {};
+        feedback.innerHTML = '<div class="alert alert-danger">' + (d.error || 'Błąd serwera') + '</div>';
+      });
+    })();
+    </script>
 </div>
+
+<style>
+#ajax-loader{position:fixed;left:50%;top:20%;transform:translateX(-50%);display:none;z-index:2000}
+</style>
+<div id="ajax-loader"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>
+<script src="ajax.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 <script>
+// Zakomentowano - nie potrzebne dla AJAX
+/*
 document.querySelectorAll('input, select, textarea').forEach(function (el) {
     function clearInvalid() {
         el.classList.remove('is-invalid');
@@ -196,6 +237,7 @@ document.querySelectorAll('input, select, textarea').forEach(function (el) {
     el.addEventListener('input', clearInvalid);
     el.addEventListener('change', clearInvalid);
 });
+*/
 </script>
 </body>
 </html>

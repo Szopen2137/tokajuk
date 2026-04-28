@@ -1,6 +1,18 @@
 <?php
 require_once 'database.php';
 
+$isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+
+function redirectOrJSON($url, $message, $isAjax) {
+    if ($isAjax) {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'error' => $message, 'redirect' => $url]);
+    } else {
+        header('Location: ' . $url);
+    }
+    exit;
+}
+
 function resolveZespolIdentifier(PDO $pdo): ?array
 {
     $idParam = trim((string)($_POST['id'] ?? ''));
@@ -35,8 +47,7 @@ function resolveZespolIdentifier(PDO $pdo): ?array
 $identifier = resolveZespolIdentifier($pdo);
 
 if ($identifier === null) {
-    header('Location: zespoly.php?error=missing');
-    exit;
+    redirectOrJSON('zespoly.php?error=missing', 'Nie wybrano zespołu do usunięcia.', $isAjax);
 }
 
 try {
@@ -49,8 +60,7 @@ try {
         $resolvedId = $lookup->fetchColumn();
 
         if ($resolvedId === false) {
-            header('Location: zespoly.php?error=missing');
-            exit;
+            redirectOrJSON('zespoly.php?error=missing', 'Nie znaleziono zespołu.', $isAjax);
         }
 
         $zespId = (string)$resolvedId;
@@ -61,17 +71,20 @@ try {
     $check->execute();
 
     if ((int)$check->fetchColumn() > 0) {
-        header('Location: zespoly.php?error=used');
-        exit;
+        redirectOrJSON('zespoly.php?error=used', 'Nie można usunąć zespołu, ponieważ ma przypisanych pracowników.', $isAjax);
     }
 
     $delete = $pdo->prepare('DELETE FROM zespoly WHERE ' . $identifier['column'] . ' = :value LIMIT 1');
     $delete->bindValue(':value', $identifier['value'], PDO::PARAM_STR);
     $delete->execute();
 
-    header('Location: zespoly.php?deleted=1');
+    if ($isAjax) {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => true, 'message' => 'Zespół został usunięty.']);
+    } else {
+        header('Location: zespoly.php?deleted=1');
+    }
     exit;
 } catch (PDOException $e) {
-    header('Location: zespoly.php?error=failed');
-    exit;
+    redirectOrJSON('zespoly.php?error=failed', 'Nie udało się usunąć zespołu.', $isAjax);
 }

@@ -151,13 +151,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$etatNotFound) {
 			$update->bindValue(':PLACA_DO', (string)$placaDo, PDO::PARAM_STR);
 			$update->execute();
 
-			if ($lookupById && $selectedIdValue !== '') {
-				header('Location: edytuj_etat.php?id=' . urlencode($selectedIdValue) . '&saved=1');
-				exit;
-			} else {
-				header('Location: edytuj_etat.php?nazwa=' . urlencode($form['NAZWA']) . '&saved=1');
+			// Return JSON for AJAX, otherwise redirect
+			if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+				header('Content-Type: application/json; charset=utf-8');
+				echo json_encode(['success' => true, 'message' => 'Zmiany zostały zapisane.']);
 				exit;
 			}
+
+			// Zakomentowano redirect dla AJAX
+			// if ($lookupById && $selectedIdValue !== '') {
+			//	header('Location: edytuj_etat.php?id=' . urlencode($selectedIdValue) . '&saved=1');
+			// } else {
+			//	header('Location: edytuj_etat.php?nazwa=' . urlencode($form['NAZWA']) . '&saved=1');
+			// }
+			// exit;
 		} catch (PDOException $e) {
 			if ((int)$e->getCode() === 23000) {
 				$fieldErrors['NAZWA'] = 'Taki etat już istnieje.';
@@ -210,9 +217,10 @@ $isSaved = isset($_GET['saved'])
 <div class="container my-5">
 	<h3 class="mb-4">Edytuj etat</h3>
 
-	<?php if ($isSaved): ?>
+	<?php /* Zakomentowano alert - feedback przez JS */ ?>
+	<?php /* if ($isSaved): ?>
 		<div class="alert alert-success">Zmiany zostały zapisane.</div>
-	<?php endif; ?>
+	<?php endif; */ ?>
 
 	<?php if ($formError): ?>
 		<div class="alert alert-danger"><?= h($formError) ?></div>
@@ -225,7 +233,7 @@ $isSaved = isset($_GET['saved'])
 		<div class="alert alert-warning">Nie znaleziono wskazanego etatu.</div>
 		<a href="etaty.php" class="btn btn-secondary">Wróć do listy etatów</a>
 	<?php else: ?>
-		<form method="post" novalidate>
+		<form method="post" novalidate class="ajax-form" data-ajax="true">
 			<?php if ($selectedIdValue !== ''): ?>
 				<input type="hidden" name="id" value="<?= h($selectedIdValue) ?>">
 			<?php endif; ?>
@@ -279,10 +287,39 @@ $isSaved = isset($_GET['saved'])
 				</div>
 			</div>
 		</form>
+
+		<div id="ajax-feedback" class="mt-3"></div>
+
+		<script>
+		(function(){
+		  var form = document.querySelector('form.ajax-form');
+		  if (!form) return;
+		  var feedback = document.getElementById('ajax-feedback');
+		  form.addEventListener('ajax:success', function (ev) {
+		    var data = ev.detail || {};
+		    var msg = data.message || 'OK';
+		    var html = '<div class="alert alert-success" role="alert">' + msg + '</div>';
+		    feedback.innerHTML = html;
+		  });
+		  form.addEventListener('ajax:error', function (ev) {
+		    var d = ev.detail || {};
+		    feedback.innerHTML = '<div class="alert alert-danger">' + (d.error || 'Błąd serwera') + '</div>';
+		  });
+		})();
+		</script>
 	<?php endif; ?>
 </div>
+
+<style>
+#ajax-loader{position:fixed;left:50%;top:20%;transform:translateX(-50%);display:none;z-index:2000}
+</style>
+<div id="ajax-loader"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>
+<script src="ajax.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 <script>
+// Zakomentowano - nie potrzebne dla AJAX
+/*
 document.querySelectorAll('input, select, textarea').forEach(function (el) {
 	function clearInvalid() {
 		el.classList.remove('is-invalid');
@@ -292,6 +329,7 @@ document.querySelectorAll('input, select, textarea').forEach(function (el) {
 	el.addEventListener('input', clearInvalid);
 	el.addEventListener('change', clearInvalid);
 });
+*/
 </script>
 </body>
 </html>

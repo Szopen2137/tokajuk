@@ -98,7 +98,8 @@ $flashError = (string)($_GET['error'] ?? '');
         </div>
     </form>
 
-    <?php if ($flashDeleted): ?>
+    <?php /* Zakomentowano flash alerts dla AJAX */ ?>
+    <?php /* if ($flashDeleted): ?>
         <div class="alert alert-success">Zespół został usunięty.</div>
     <?php endif; ?>
 
@@ -108,7 +109,7 @@ $flashError = (string)($_GET['error'] ?? '');
         <div class="alert alert-warning">Nie wybrano zespołu do usunięcia.</div>
     <?php elseif ($flashError === 'failed'): ?>
         <div class="alert alert-danger">Nie udało się usunąć zespołu.</div>
-    <?php endif; ?>
+    <?php endif; */ ?>
 
     <div class="row">
         <div class="col-12">
@@ -132,7 +133,7 @@ $flashError = (string)($_GET['error'] ?? '');
                         <td>
                             <div class="d-flex gap-2 flex-wrap">
                                 <a class="btn btn-sm btn-outline-warning" href="<?= h(zespolEditLink($row)) ?>">Edytuj</a>
-                                <form method="post" action="usun_zespol.php" class="d-inline" id="<?= h($deleteFormId) ?>">
+                                <form method="post" action="usun_zespol.php" class="d-inline ajax-form" data-ajax="true" id="<?= h($deleteFormId) ?>">
                                     <input type="hidden" name="<?= h($deletePayload['name']) ?>" value="<?= h($deletePayload['value']) ?>">
                                     <button type="button" class="btn btn-sm btn-outline-danger js-delete-button" data-delete-form="<?= h($deleteFormId) ?>" data-delete-label="tego zespołu">Usuń</button>
                                 </form>
@@ -182,11 +183,22 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     submitButton.addEventListener('click', function () {
-        if (pendingForm) {
-            pendingForm.submit();
+        if (!pendingForm) return;
+        if (pendingForm.classList.contains('ajax-form') || pendingForm.dataset.ajax === 'true') {
+            pendingForm.requestSubmit();
+            modal.hide();
+            return;
         }
+        pendingForm.submit();
     });
 });
 </script>
+
+<!-- AJAX loader and integration -->
+<style>
+#ajax-loader{position:fixed;left:50%;top:20%;transform:translateX(-50%);display:none;z-index:2000}
+</style>
+<div id="ajax-loader"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>
+<script src="ajax.js"></script>
 </body>
 </html>

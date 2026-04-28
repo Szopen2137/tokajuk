@@ -1,4 +1,3 @@
-// Global AJAX helper for forms with class 'ajax-form' or attribute data-ajax="true"
 function showLoader() {
   const l = document.getElementById('ajax-loader');
   if (l) l.style.display = 'block';
@@ -28,12 +27,10 @@ document.addEventListener('submit', async function (e) {
     });
     const data = await res.json();
     if (res.ok && data && data.success) {
-      // default success action: if response contains redirect, follow it
       if (data.redirect) {
         window.location.href = data.redirect;
         return;
       }
-      // dispatch custom event for handling UI updates
       form.dispatchEvent(new CustomEvent('ajax:success', { detail: data }));
     } else {
       form.dispatchEvent(new CustomEvent('ajax:error', { detail: data }));
@@ -44,8 +41,6 @@ document.addEventListener('submit', async function (e) {
     hideLoader();
   }
 });
-
-// basic convenience: show alerts on success/error if no handler attached
 document.addEventListener('ajax:success', function (e) {
   const data = e.detail;
   if (data && data.message) alert(data.message);
@@ -54,6 +49,4 @@ document.addEventListener('ajax:error', function (e) {
   const d = e.detail || {};
   alert(d.error || 'Wystąpił błąd (AJAX).');
 });
-
-// If a form dispatches ajax:success itself, allow inline handlers.
 document.addEventListener('submit', function () {}, true);

@@ -233,7 +233,7 @@ $isSaved = isset($_GET['saved'])
 		<div class="alert alert-warning">Nie znaleziono wskazanego etatu.</div>
 		<a href="etaty.php" class="btn btn-secondary">Wróć do listy etatów</a>
 	<?php else: ?>
-		<form method="post" novalidate class="ajax-form" data-ajax="true">
+		<form method="post" novalidate class="ajax-form" data-ajax="true" data-refresh-on-success="true">
 			<?php if ($selectedIdValue !== ''): ?>
 				<input type="hidden" name="id" value="<?= h($selectedIdValue) ?>">
 			<?php endif; ?>

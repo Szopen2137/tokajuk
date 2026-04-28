@@ -11,6 +11,11 @@ function hideLoader() {
 function ensureStartupLoader() {
   if (document.getElementById('startup-loader')) return;
 
+  if (document.body) {
+    document.body.style.opacity = '0';
+    document.body.style.transition = 'opacity 180ms ease';
+  }
+
   const loader = document.createElement('div');
   loader.id = 'startup-loader';
   loader.innerHTML = `
@@ -24,6 +29,9 @@ function ensureStartupLoader() {
 
   window.setTimeout(function () {
     loader.classList.add('startup-loader-hide');
+    if (document.body) {
+      document.body.style.opacity = '1';
+    }
     window.setTimeout(function () {
       loader.remove();
     }, 300);
@@ -107,6 +115,13 @@ async function handleAjaxSubmit(form) {
         if (row) {
           row.remove();
         }
+        return;
+      }
+
+      if (form.dataset.refreshOnSuccess === 'true') {
+        window.setTimeout(function () {
+          window.location.reload();
+        }, 1000);
         return;
       }
 

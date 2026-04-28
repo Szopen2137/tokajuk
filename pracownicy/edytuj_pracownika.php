@@ -243,7 +243,7 @@ $isSaved = isset($_GET['saved']) && $_GET['saved'] === '1';
 		<div class="alert alert-warning">Nie znaleziono wskazanego pracownika.</div>
 		<a href="index.php" class="btn btn-secondary">Wróć do listy pracowników</a>
 	<?php else: ?>
-		<form method="post" novalidate class="ajax-form" data-ajax="true">
+		<form method="post" novalidate class="ajax-form" data-ajax="true" data-refresh-on-success="true">
 			<input type="hidden" name="id" value="<?= h($idPrac) ?>">
 
 			<div class="row g-3">

@@ -239,7 +239,7 @@ $isSaved = isset($_GET['saved'])
 		<div class="alert alert-warning">Nie znaleziono wskazanego zespołu.</div>
 		<a href="zespoly.php" class="btn btn-secondary">Wróć do listy zespołów</a>
 	<?php else: ?>
-		<form method="post" novalidate class="ajax-form" data-ajax="true">
+		<form method="post" novalidate class="ajax-form" data-ajax="true" data-refresh-on-success="true">
 			<?php if ($selectedIdValue !== ''): ?>
 				<input type="hidden" name="id" value="<?= h($selectedIdValue) ?>">
 			<?php endif; ?>

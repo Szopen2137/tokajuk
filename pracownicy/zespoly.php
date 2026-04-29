@@ -84,7 +84,7 @@ $flashError = (string)($_GET['error'] ?? '');
 </nav>
 
 <div class="container">
-    <form action="" method="post">
+    <form action="" method="post" id="szukajka-zesp">
         <div class="row my-5">
             <div class="col-md-4">
                 <input type="text" class="form-control" name="search" />

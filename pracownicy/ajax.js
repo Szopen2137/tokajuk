@@ -9,6 +9,36 @@ function hideLoader() {
   if (loader) loader.style.display = 'none';
 }
 
+function showPageLoader(message) {
+  let loader = document.getElementById('page-loader');
+  if (!loader) {
+    loader = document.createElement('div');
+    loader.id = 'page-loader';
+    loader.innerHTML = `
+      <div class="page-loader-backdrop"></div>
+      <div class="page-loader-box" role="status" aria-live="polite">
+        <div class="spinner-border text-primary" aria-hidden="true"></div>
+        <div class="page-loader-text"></div>
+      </div>
+    `;
+    document.body.appendChild(loader);
+  }
+
+  const text = loader.querySelector('.page-loader-text');
+  if (text) {
+    text.textContent = message || 'Ładowanie...';
+  }
+
+  loader.style.display = 'flex';
+  document.body.classList.add('page-loading');
+}
+
+function hidePageLoader() {
+  const loader = document.getElementById('page-loader');
+  if (loader) loader.style.display = 'none';
+  document.body.classList.remove('page-loading');
+}
+
 function showDataLoader(container) {
   const loader = document.createElement('tr');
   loader.innerHTML = `<td colspan="100%"><div class="d-flex justify-content-center w-100 py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Ładowanie...</span></div></div></td>`;
@@ -20,7 +50,42 @@ function injectStartupStyles() {
   if (document.getElementById('startup-loader-styles')) return;
   const style = document.createElement('style');
   style.id = 'startup-loader-styles';
-  style.textContent = `/* Data loader styles handled by showDataLoader() */`;
+  style.textContent = `
+    #page-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      pointer-events: all;
+    }
+    #page-loader .page-loader-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(10, 10, 12, 0.92);
+      backdrop-filter: blur(8px);
+    }
+    #page-loader .page-loader-box {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+      padding: 1rem 1.25rem;
+      border-radius: 1rem;
+      background: rgba(33, 37, 41, 0.94);
+      color: #fff;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    }
+    #page-loader .page-loader-text {
+      font-size: 1rem;
+      letter-spacing: 0.02em;
+    }
+    body.page-loading {
+      overflow: hidden;
+    }
+  `;
   document.head.appendChild(style);
 }
 
@@ -138,7 +203,12 @@ function initSearchZespoly() {
 
 // === FORM SUBMISSION ===
 async function handleAjaxSubmit(form) {
-  showLoader();
+  const isFormPage = document.body && document.body.dataset.pageType === 'form';
+  if (isFormPage) {
+    showPageLoader('Zapisywanie...');
+  } else {
+    showLoader();
+  }
   const url = form.action || window.location.href;
   const method = (form.method || 'POST').toUpperCase();
   const fd = new FormData(form);
@@ -170,13 +240,25 @@ async function handleAjaxSubmit(form) {
   } catch (err) {
     emitEvent(form, 'ajax:error', { error: 'network' });
   } finally {
-    hideLoader();
+    if (isFormPage) {
+      hidePageLoader();
+    } else {
+      hideLoader();
+    }
   }
 }
 
 // === EVENT LISTENERS ===
 document.addEventListener('DOMContentLoaded', function () {
   injectStartupStyles();
+  if (document.body && document.body.dataset.pageType === 'form') {
+    showPageLoader('Ładowanie formularza...');
+    window.addEventListener('load', function () {
+      window.setTimeout(function () {
+        hidePageLoader();
+      }, 150);
+    });
+  }
   if (document.getElementById('workersData')) {
     loadWorkers();
     initSearchWorkers();

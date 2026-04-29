@@ -27,15 +27,22 @@ function ensureStartupLoader() {
   `;
   document.body.appendChild(loader);
 
+  // Spinner will be hidden by hideStartupLoader() when data is loaded
+}
+
+function hideStartupLoader() {
+  const loader = document.getElementById('startup-loader');
+  if (!loader) return;
+
+  loader.classList.add('startup-loader-hide');
+  if (document.body) {
+    document.body.style.opacity = '1';
+  }
   window.setTimeout(function () {
-    loader.classList.add('startup-loader-hide');
-    if (document.body) {
-      document.body.style.opacity = '1';
-    }
-    window.setTimeout(function () {
+    if (loader.parentElement) {
       loader.remove();
-    }, 300);
-  }, 2000);
+    }
+  }, 300);
 }
 
 function injectStartupStyles() {
@@ -142,6 +149,15 @@ async function handleAjaxSubmit(form) {
 document.addEventListener('DOMContentLoaded', function () {
   injectStartupStyles();
   ensureStartupLoader();
+
+  // Auto-hide loader when all resources (images, styles, fonts) are loaded
+  // Pages can call hideStartupLoader() manually to hide it earlier
+  window.addEventListener('load', function () {
+    // Small delay to ensure content is actually visible
+    window.setTimeout(function () {
+      hideStartupLoader();
+    }, 100);
+  });
 
   document.addEventListener('submit', function (e) {
     const form = e.target;

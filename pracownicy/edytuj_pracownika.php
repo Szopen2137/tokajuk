@@ -187,6 +187,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$notFound) {
 		} catch (PDOException $e) {
 			$formError = 'Nie udało się zapisać zmian pracownika.';
 		}
+	} else {
+		// Validation errors - handle AJAX response
+		if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+			header('Content-Type: application/json; charset=utf-8');
+			echo json_encode([
+				'success' => false,
+				'message' => 'Błędy walidacji' . ($formError ? ': ' . $formError : ''),
+				'errors' => $fieldErrors
+			]);
+			exit;
+		}
 	}
 }
 

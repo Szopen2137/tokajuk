@@ -12,6 +12,7 @@ function hideLoader() {
 function showPageLoader(message) {
   let loader = document.getElementById('page-loader');
   if (!loader) {
+    console.log('Creating page-loader element');
     loader = document.createElement('div');
     loader.id = 'page-loader';
     loader.innerHTML = `
@@ -22,6 +23,7 @@ function showPageLoader(message) {
       </div>
     `;
     document.body.appendChild(loader);
+    console.log('page-loader element created and appended');
   }
 
   const text = loader.querySelector('.page-loader-text');
@@ -31,6 +33,7 @@ function showPageLoader(message) {
 
   loader.style.display = 'flex';
   document.body.classList.add('page-loading');
+  console.log('showPageLoader: display set to flex, page-loading class added');
 }
 
 function hidePageLoader() {
@@ -47,7 +50,11 @@ function showDataLoader(container) {
 }
 
 function injectStartupStyles() {
-  if (document.getElementById('startup-loader-styles')) return;
+  if (document.getElementById('startup-loader-styles')) {
+    console.log('Startup styles already injected');
+    return;
+  }
+  console.log('Injecting startup styles');
   const style = document.createElement('style');
   style.id = 'startup-loader-styles';
   style.textContent = `
@@ -87,6 +94,7 @@ function injectStartupStyles() {
     }
   `;
   document.head.appendChild(style);
+  console.log('Startup styles injected successfully');
 }
 
 function isAjaxForm(form) {
@@ -218,7 +226,16 @@ async function handleAjaxSubmit(form) {
       body: fd,
       headers: { 'X-Requested-With': 'XMLHttpRequest' }
     });
-    const data = await res.json();
+    
+    let data;
+    try {
+      data = await res.json();
+    } catch (parseErr) {
+      console.error('JSON parse error:', parseErr, 'Response status:', res.status);
+      emitEvent(form, 'ajax:error', { error: 'Błąd parsowania odpowiedzi - serwer zwrócił niepoprawny format' });
+      return;
+    }
+    
     if (res.ok && data && data.success) {
       emitEvent(form, 'ajax:success', data);
       if (data.action === 'delete') {
@@ -235,10 +252,11 @@ async function handleAjaxSubmit(form) {
         return;
       }
     } else {
-      emitEvent(form, 'ajax:error', data || { error: 'ajax-failed' });
+      emitEvent(form, 'ajax:error', data || { error: 'Żądanie nie powiodło się' });
     }
   } catch (err) {
-    emitEvent(form, 'ajax:error', { error: 'network' });
+    console.error('Fetch error:', err);
+    emitEvent(form, 'ajax:error', { error: 'Błąd sieciowy: ' + (err.message || 'nieznany') });
   } finally {
     if (isFormPage) {
       hidePageLoader();
@@ -252,8 +270,10 @@ async function handleAjaxSubmit(form) {
 document.addEventListener('DOMContentLoaded', function () {
   injectStartupStyles();
   if (document.body && document.body.dataset.pageType === 'form') {
+    console.log('Form page detected - showing loader');
     showPageLoader('Ładowanie formularza...');
     window.addEventListener('load', function () {
+      console.log('Window load event fired - hiding loader');
       window.setTimeout(function () {
         hidePageLoader();
       }, 150);
@@ -300,9 +320,45 @@ document.addEventListener('ajax:error', function (e) {
   if (form && form.classList && form.classList.contains('ajax-form')) {
     const feedback = form.parentElement ? form.parentElement.querySelector('#ajax-feedback') : null;
     if (feedback) {
-      feedback.innerHTML = '<div class="alert alert-danger">' + (d.error || 'Błąd serwera') + '</div>';
+      let errorHtml = '<div class="alert alert-danger">';
+      if (d.message) {
+        errorHtml += '<strong>' + d.message + '</strong>';
+      }
+      if (d.errors && typeof d.errors === 'object') {
+        const errorLines = [];
+        for (const [field, message] of Object.entries(d.errors)) {
+          if (message) {
+            errorLines.push(message);
+          }
+        }
+        if (errorLines.length > 0) {
+          if (d.message) {
+            errorHtml += '<ul class="mb-0 mt-2">';
+            errorLines.forEach(msg => { errorHtml += '<li>' + msg + '</li>'; });
+            errorHtml += '</ul>';
+          } else {
+            errorHtml += errorLines.join('<br>');
+          }
+        }
+      }
+      errorHtml += '</div>';
+      feedback.innerHTML = errorHtml;
       return;
     }
   }
-  alert(d.error || 'Wystąpił błąd (AJAX).');
+  if (d.errors && typeof d.errors === 'object') {
+    let errorMsg = d.message || 'Błędy walidacji:';
+    const errorLines = [];
+    for (const [field, message] of Object.entries(d.errors)) {
+      if (message) {
+        errorLines.push(message);
+      }
+    }
+    if (errorLines.length > 0) {
+      errorMsg += '\n- ' + errorLines.join('\n- ');
+    }
+    alert(errorMsg);
+  } else {
+    alert(d.error || d.message || 'Wystąpił błąd (AJAX).');
+  }
 });

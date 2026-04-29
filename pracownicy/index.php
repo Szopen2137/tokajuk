@@ -149,12 +149,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
     submitButton.addEventListener('click', function () {
         if (!pendingForm) return;
+        console.log('Delete confirmed for form:', pendingForm.id);
         // If form is marked for AJAX, use requestSubmit() so our global listener intercepts it
         if (pendingForm.classList.contains('ajax-form') || pendingForm.dataset.ajax === 'true') {
-            pendingForm.requestSubmit();
+            console.log('Using AJAX submit via requestSubmit()');
+            if (typeof pendingForm.requestSubmit === 'function') {
+                pendingForm.requestSubmit();
+            } else {
+                console.warn('requestSubmit not supported, falling back to submit()');
+                pendingForm.submit();
+            }
             modal.hide();
             return;
         }
+        console.log('Using regular submit()');
         pendingForm.submit();
     });
 });

@@ -211,6 +211,7 @@ function initSearchZespoly() {
 
 // === FORM SUBMISSION ===
 async function handleAjaxSubmit(form) {
+  console.log('handleAjaxSubmit called for form:', form.id, form.action);
   const isFormPage = document.body && document.body.dataset.pageType === 'form';
   if (isFormPage) {
     showPageLoader('Zapisywanie...');
@@ -239,8 +240,15 @@ async function handleAjaxSubmit(form) {
     if (res.ok && data && data.success) {
       emitEvent(form, 'ajax:success', data);
       if (data.action === 'delete') {
+        console.log('Delete action detected');
         const row = form.closest('tr');
-        if (row) row.remove();
+        console.log('Found row:', row);
+        if (row) {
+          console.log('Removing row from DOM');
+          row.remove();
+        } else {
+          console.warn('Could not find tr parent of form:', form);
+        }
         return;
       }
       if (form.dataset.refreshOnSuccess === 'true') {
@@ -292,9 +300,14 @@ document.addEventListener('DOMContentLoaded', function () {
     initSearchZespoly();
   }
   document.addEventListener('submit', function (e) {
+    console.log('Submit event captured');
     const form = e.target;
     if (!(form instanceof HTMLFormElement)) return;
-    if (!isAjaxForm(form)) return;
+    if (!isAjaxForm(form)) {
+      console.log('Form is not AJAX form, skipping');
+      return;
+    }
+    console.log('AJAX form detected, preventing default and handling');
     e.preventDefault();
     handleAjaxSubmit(form);
   });
@@ -317,6 +330,7 @@ document.addEventListener('ajax:success', function (e) {
 document.addEventListener('ajax:error', function (e) {
   const d = e.detail || {};
   const form = e.target;
+  console.log('AJAX error event:', d);
   if (form && form.classList && form.classList.contains('ajax-form')) {
     const feedback = form.parentElement ? form.parentElement.querySelector('#ajax-feedback') : null;
     if (feedback) {

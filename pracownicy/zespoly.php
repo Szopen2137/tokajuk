@@ -122,25 +122,7 @@ $flashError = (string)($_GET['error'] ?? '');
                     <th>Akcje</th>
                 </tr>
                 </thead>
-                <tbody>
-                <?php foreach ($stmt as $row): ?>
-                    <?php $deletePayload = zespolDeletePayload($row); ?>
-                    <?php $deleteFormId = 'delete-zespol-' . md5($deletePayload['name'] . ':' . $deletePayload['value']); ?>
-                    <tr>
-                        <td><?= h($row['ID_ZESP']) ?></td>
-                        <td><?= h($row['NAZWA']) ?></td>
-                        <td><?= h($row['ADRES']) ?></td>
-                        <td>
-                            <div class="d-flex gap-2 flex-wrap">
-                                <a class="btn btn-sm btn-outline-warning" href="<?= h(zespolEditLink($row)) ?>">Edytuj</a>
-                                <form method="post" action="usun_zespol.php" class="d-inline ajax-form" data-ajax="true" id="<?= h($deleteFormId) ?>">
-                                    <input type="hidden" name="<?= h($deletePayload['name']) ?>" value="<?= h($deletePayload['value']) ?>">
-                                    <button type="button" class="btn btn-sm btn-outline-danger js-delete-button" data-delete-form="<?= h($deleteFormId) ?>" data-delete-label="tego zespołu">Usuń</button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
+                <tbody id="zespolyData">
                 </tbody>
             </table>
         </div>

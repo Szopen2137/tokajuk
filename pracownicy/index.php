@@ -105,29 +105,7 @@ $flashError = (string)($_GET['error'] ?? '');
                     <th>Akcje</th>
                 </tr>
                 </thead>
-                <tbody>
-                <?php foreach ($stmt as $row): ?>
-                    <tr>
-                        <td><?= h($row['ID_PRAC']) ?></td>
-                        <td><?= h($row['IMIE']) ?></td>
-                        <td><?= h($row['NAZWISKO']) ?></td>
-                        <td><?= h($row['ETAT']) ?></td>
-                        <td><?= h($row['IMIE_SZEFA'] ? $row['IMIE_SZEFA'] . ' ' . $row['NAZWISKO_SZEFA'] : '-') ?></td>
-                        <td><?= h($row['ZATRUDNIONY']) ?></td>
-                        <td><?= h($row['PLACA_POD']) ?></td>
-                        <td><?= h($row['PLACA_DOD']) ?></td>
-                        <td><?= h($row['NAZWA_ZESPOLU']) ?></td>
-                        <td>
-                            <div class="d-flex gap-2 flex-wrap">
-                                <a class="btn btn-sm btn-outline-warning" href="edytuj_pracownika.php?id=<?= urlencode((string)$row['ID_PRAC']) ?>">Edytuj</a>
-                                <form method="post" action="usun_pracownika.php" class="d-inline ajax-form" data-ajax="true" id="delete-pracownik-<?= h($row['ID_PRAC']) ?>">
-                                    <input type="hidden" name="id" value="<?= h($row['ID_PRAC']) ?>">
-                                    <button type="button" class="btn btn-sm btn-outline-danger js-delete-button" data-delete-form="delete-pracownik-<?= h($row['ID_PRAC']) ?>" data-delete-label="pracownika">Usuń</button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
+                <tbody id="workersData">
                 </tbody>
             </table>
         </div>

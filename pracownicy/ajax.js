@@ -8,41 +8,19 @@ function hideLoader() {
   if (loader) loader.style.display = 'none';
 }
 
-function ensureStartupLoader() {
-  if (document.getElementById('startup-loader')) return;
-
-  if (document.body) {
-    document.body.style.opacity = '0';
-    document.body.style.transition = 'opacity 180ms ease';
-  }
-
-  const loader = document.createElement('div');
-  loader.id = 'startup-loader';
+function showDataLoader(container) {
+  const loader = document.createElement('tr');
   loader.innerHTML = `
-    <div class="startup-loader-backdrop"></div>
-    <div class="startup-loader-box" role="status" aria-live="polite">
-      <div class="spinner-border text-primary" aria-hidden="true"></div>
-      <div class="startup-loader-text">Ładowanie strony...</div>
-    </div>
+    <td colspan="100%">
+      <div class="d-flex justify-content-center w-100 py-4">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Ładowanie...</span>
+        </div>
+      </div>
+    </td>
   `;
-  document.body.appendChild(loader);
-
-  // Spinner will be hidden by hideStartupLoader() when data is loaded
-}
-
-function hideStartupLoader() {
-  const loader = document.getElementById('startup-loader');
-  if (!loader) return;
-
-  loader.classList.add('startup-loader-hide');
-  if (document.body) {
-    document.body.style.opacity = '1';
-  }
-  window.setTimeout(function () {
-    if (loader.parentElement) {
-      loader.remove();
-    }
-  }, 300);
+  container.appendChild(loader);
+  return loader;
 }
 
 function injectStartupStyles() {
@@ -51,41 +29,7 @@ function injectStartupStyles() {
   const style = document.createElement('style');
   style.id = 'startup-loader-styles';
   style.textContent = `
-    #startup-loader {
-      position: fixed;
-      inset: 0;
-      z-index: 99999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: all;
-    }
-    #startup-loader .startup-loader-backdrop {
-      position: absolute;
-      inset: 0;
-      background: rgba(10, 10, 12, 0.92);
-      backdrop-filter: blur(8px);
-    }
-    #startup-loader .startup-loader-box {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      align-items: center;
-      gap: 0.9rem;
-      padding: 1rem 1.25rem;
-      border-radius: 1rem;
-      background: rgba(33, 37, 41, 0.94);
-      color: #fff;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
-    }
-    #startup-loader.startup-loader-hide {
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-    #startup-loader .startup-loader-text {
-      font-size: 1rem;
-      letter-spacing: 0.02em;
-    }
+    /* Data loader styles handled by showDataLoader() */
   `;
   document.head.appendChild(style);
 }
@@ -148,16 +92,20 @@ async function handleAjaxSubmit(form) {
 
 document.addEventListener('DOMContentLoaded', function () {
   injectStartupStyles();
-  ensureStartupLoader();
 
-  // Auto-hide loader when all resources (images, styles, fonts) are loaded
-  // Pages can call hideStartupLoader() manually to hide it earlier
-  window.addEventListener('load', function () {
-    // Small delay to ensure content is actually visible
-    window.setTimeout(function () {
-      hideStartupLoader();
-    }, 100);
-  });
+  // Load data for current page
+  if (document.getElementById('workersData')) {
+    loadWorkers();
+    initSearchWorkers();
+  }
+  if (document.getElementById('etatyData')) {
+    loadEtaty();
+    initSearchEtaty();
+  }
+  if (document.getElementById('zespolyData')) {
+    loadZespoly();
+    initSearchZespoly();
+  }
 
   document.addEventListener('submit', function (e) {
     const form = e.target;
@@ -168,6 +116,150 @@ document.addEventListener('DOMContentLoaded', function () {
     handleAjaxSubmit(form);
   });
 });
+
+function loadWorkers() {
+  const container = document.getElementById('workersData');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  const loader = showDataLoader(container);
+
+  fetch('getWorkers.php', {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(res => res.text())
+  .then(html => {
+    container.innerHTML = '';
+    container.innerHTML = html;
+  })
+  .catch(() => {
+    container.innerHTML = '';
+    container.innerHTML = '<tr><td colspan="100%" class="text-center text-danger">Błąd ładowania danych</td></tr>';
+  });
+}
+
+function initSearchWorkers() {
+  const form = document.querySelector('#szukajka');
+  if (!form) return;
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const container = document.getElementById('workersData');
+    container.innerHTML = '';
+    showDataLoader(container);
+
+    const fd = new FormData(form);
+    fetch('getWorkersSzukajka.php', {
+      method: 'POST',
+      body: fd,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => res.text())
+    .then(html => {
+      container.innerHTML = html;
+    })
+    .catch(() => {
+      container.innerHTML = '<tr><td colspan="100%" class="text-center text-danger">Błąd wyszukiwania</td></tr>';
+    });
+  });
+}
+
+function loadEtaty() {
+  const container = document.getElementById('etatyData');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  const loader = showDataLoader(container);
+
+  fetch('getEtaty.php', {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(res => res.text())
+  .then(html => {
+    container.innerHTML = '';
+    container.innerHTML = html;
+  })
+  .catch(() => {
+    container.innerHTML = '';
+    container.innerHTML = '<tr><td colspan="100%" class="text-center text-danger">Błąd ładowania danych</td></tr>';
+  });
+}
+
+function initSearchEtaty() {
+  const form = document.querySelector('#szukajka-etat');
+  if (!form) return;
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const container = document.getElementById('etatyData');
+    container.innerHTML = '';
+    showDataLoader(container);
+
+    const fd = new FormData(form);
+    fetch('getEtatySzukajka.php', {
+      method: 'POST',
+      body: fd,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => res.text())
+    .then(html => {
+      container.innerHTML = html;
+    })
+    .catch(() => {
+      container.innerHTML = '<tr><td colspan="100%" class="text-center text-danger">Błąd wyszukiwania</td></tr>';
+    });
+  });
+}
+
+function loadZespoly() {
+  const container = document.getElementById('zespolyData');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  const loader = showDataLoader(container);
+
+  fetch('getZespoly.php', {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(res => res.text())
+  .then(html => {
+    container.innerHTML = '';
+    container.innerHTML = html;
+  })
+  .catch(() => {
+    container.innerHTML = '';
+    container.innerHTML = '<tr><td colspan="100%" class="text-center text-danger">Błąd ładowania danych</td></tr>';
+  });
+}
+
+function initSearchZespoly() {
+  const form = document.querySelector('#szukajka-zesp');
+  if (!form) return;
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const container = document.getElementById('zespolyData');
+    container.innerHTML = '';
+    showDataLoader(container);
+
+    const fd = new FormData(form);
+    fetch('getZespolySzukajka.php', {
+      method: 'POST',
+      body: fd,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => res.text())
+    .then(html => {
+      container.innerHTML = html;
+    })
+    .catch(() => {
+      container.innerHTML = '<tr><td colspan="100%" class="text-center text-danger">Błąd wyszukiwania</td></tr>';
+    });
+  });
+}
 
 document.addEventListener('ajax:success', function (e) {
   const data = e.detail || {};

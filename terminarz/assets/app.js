@@ -181,16 +181,23 @@ function renderEntries(entries) {
             ? `${entry.reminder_email}${entry.reminder_minutes !== null ? ` (${entry.reminder_minutes} min)` : ''}${entry.reminder_sent ? ' wysłane' : ''}`
             : 'Brak';
 
+        // show description under title so it is visible without extra horizontal space
+        const description = entry.description ? `<div class="entry-desc">${escapeHtml(entry.description)}</div>` : '';
+
+        // shorten datetime display to be more compact
+        const start = escapeHtml(entry.start_at);
+        const end = escapeHtml(entry.end_at);
+
         return `
             <tr>
-                <td>${escapeHtml(entry.title)}</td>
+                <td class="entry-title">${escapeHtml(entry.title)}${description}</td>
                 <td>${escapeHtml(entry.category_name)}</td>
-                <td>${escapeHtml(entry.start_at)}</td>
-                <td>${escapeHtml(entry.end_at)}</td>
+                <td>${start}</td>
+                <td>${end}</td>
                 <td>${escapeHtml(reminder)}</td>
                 <td class="row-actions">
-                    <button type="button" class="link-button btn btn-sm btn-outline-info me-2" data-edit="${entry.id}">Edytuj</button>
-                    <button type="button" class="link-button danger btn btn-sm btn-outline-danger" data-delete="${entry.id}">Usuń</button>
+                    <button type="button" class="btn btn-sm btn-outline-info me-2" data-edit="${entry.id}">Edytuj</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" data-delete="${entry.id}">Usuń</button>
                 </td>
             </tr>
         `;

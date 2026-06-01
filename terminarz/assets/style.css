@@ -376,15 +376,18 @@ button:disabled {
 .entries-table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 900px;
+    min-width: 0; /* allow table to shrink to container */
+    table-layout: auto;
 }
 
 .entries-table th,
 .entries-table td {
-    padding: 14px 12px;
-    border-bottom: 1px solid rgba(159, 180, 205, 0.1);
+    padding: 10px 10px;
+    border-bottom: 1px solid rgba(159, 180, 205, 0.08);
     text-align: left;
     vertical-align: top;
+    white-space: normal; /* allow wrapping */
+    word-break: break-word;
 }
 
 .entries-table th {
@@ -398,6 +401,18 @@ button:disabled {
     text-align: center;
     color: var(--muted);
     padding: 24px !important;
+}
+
+.entry-title {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.entry-desc {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.2;
 }
 
 .row-actions {

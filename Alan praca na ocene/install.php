@@ -1,6 +1,6 @@
 <?php
 try {
-    $conn = new PDO('mysql:host=172.19.0.1;charset=utf8mb4', 'root', 'root', [
+    $conn = new PDO('mysql:host=100.108.229.101;charset=utf8mb4', 'root', 'root', [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
     ]);
 } catch (PDOException $e) {

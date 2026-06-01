@@ -33,7 +33,7 @@ body {
 }
 
 .shell {
-    width: min(1180px, calc(100% - 32px));
+    width: min(1440px, calc(100% - 48px));
     margin: 0 auto;
     padding: 28px 0 48px;
 }
@@ -220,8 +220,8 @@ button:disabled {
 
 .dashboard {
     display: grid;
-    grid-template-columns: 0.95fr 1.35fr;
-    gap: 18px;
+    grid-template-columns: 0.9fr 1.6fr; /* give more width to the entries list */
+    gap: 20px;
     align-items: start;
 }
 
@@ -238,6 +238,21 @@ button:disabled {
     border-radius: 22px;
     box-shadow: var(--shadow);
     padding: 20px;
+}
+
+.entry-title {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.entry-desc {
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.25;
+    background: rgba(255,255,255,0.02);
+    padding: 8px 10px;
+    border-radius: 8px;
 }
 
 .calendar-head,
@@ -369,7 +384,7 @@ button:disabled {
 }
 
 .table-wrap {
-    overflow-x: auto;
+    overflow-x: hidden;
     margin-top: 10px;
 }
 
@@ -388,6 +403,12 @@ button:disabled {
     vertical-align: top;
     white-space: normal; /* allow wrapping */
     word-break: break-word;
+}
+
+.entries-table td:nth-child(3),
+.entries-table td:nth-child(4) {
+    white-space: nowrap;
+    width: 1%; /* make date columns compact */
 }
 
 .entries-table th {
@@ -417,6 +438,14 @@ button:disabled {
 
 .row-actions {
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.row-actions .btn {
+    margin: 0 !important;
+    flex: 0 0 auto;
 }
 
 .link-button {
@@ -487,7 +516,7 @@ button:disabled {
     }
 
     .entries-table {
-        min-width: 760px;
+        min-width: 0;
     }
 }
 

@@ -185,8 +185,19 @@ function renderEntries(entries) {
         const description = entry.description ? `<div class="entry-desc">${escapeHtml(entry.description)}</div>` : '';
 
         // shorten datetime display to be more compact
-        const start = escapeHtml(entry.start_at);
-        const end = escapeHtml(entry.end_at);
+        function formatShortDatetime(value) {
+            if (!value) return '';
+            // support 'YYYY-MM-DD HH:MM:SS' and 'YYYY-MM-DDTHH:MM'
+            const normalized = value.replace('T', ' ');
+            const [datePart, timePart] = normalized.split(' ');
+            if (!datePart) return escapeHtml(value);
+            const [y, m, d] = datePart.split('-');
+            const hhmm = (timePart || '').slice(0,5);
+            return `${d}.${m} ${hhmm}`;
+        }
+
+        const start = escapeHtml(formatShortDatetime(entry.start_at));
+        const end = escapeHtml(formatShortDatetime(entry.end_at));
 
         return `
             <tr>
@@ -196,7 +207,7 @@ function renderEntries(entries) {
                 <td>${end}</td>
                 <td>${escapeHtml(reminder)}</td>
                 <td class="row-actions">
-                    <button type="button" class="btn btn-sm btn-outline-info me-2" data-edit="${entry.id}">Edytuj</button>
+                    <button type="button" class="btn btn-sm btn-outline-info" data-edit="${entry.id}">Edytuj</button>
                     <button type="button" class="btn btn-sm btn-outline-danger" data-delete="${entry.id}">Usuń</button>
                 </td>
             </tr>

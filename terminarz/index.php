@@ -16,7 +16,7 @@ $user = current_user();
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-    <main class="shell container-lg py-4 py-lg-5">
+    <main class="shell container-xxl py-4 py-lg-5">
         <section class="hero school-hero">
             <div>
                 <p class="eyebrow text-uppercase fw-semibold mb-3">Szkolny terminarz</p>

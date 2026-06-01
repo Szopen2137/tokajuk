@@ -47,11 +47,19 @@ function requireLogin() {
         session_destroy();
         jsonResponse(['error' => 'Sesja wygasła. Zaloguj się ponownie.'], 401);
     }
+<<<<<<< HEAD
 }
+=======
+    }
+>>>>>>> 0e083c3 (zmiana ip)
 
 function jsonResponse($data, $code = 200) {
     http_response_code($code);
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit;
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 0e083c3 (zmiana ip)

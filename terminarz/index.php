@@ -20,8 +20,8 @@ $user = current_user();
         <section class="hero school-hero">
             <div>
                 <p class="eyebrow text-uppercase fw-semibold mb-3">Szkolny terminarz</p>
-                <h1 class="display-5 fw-semibold">Kalendarz klasowy z wpisami i przypomnieniami</h1>
-                <p class="lead">Prosty projekt na szkołę: logowanie admin/admin, wpisy z datą, godziną, kategorią i opcjonalnym e-mailem. Wszystko działa bez przeładowywania strony.</p>
+                <h1 class="display-5 fw-semibold">Kalendarz, który pozwala zarządzać terminami</h1>
+                <p class="lead">Eleganckie dzialanie strony zrobione przez Szopena</p>
             </div>
             <div class="hero-card card text-bg-dark border-secondary shadow-lg">
                 <span class="text-uppercase small text-secondary">Logowanie</span>
